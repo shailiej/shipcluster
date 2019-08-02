@@ -1395,7 +1395,7 @@ metadata:
 spec:
   ports:
   - name: service
-    port: 9000
+    port: 911
     protocol: TCP
     targetPort: 9000
   selector:
@@ -1549,7 +1549,7 @@ spec:
               key: uri
               name: ship-enterprise-postgres
         - name: INIT_SERVER_URI
-          value: http://init-server:3000
+          value: 11111
         - name: WATCH_SERVER_URI
           value: http://watch-server:3000
         - name: PINO_LOG_PRETTY
