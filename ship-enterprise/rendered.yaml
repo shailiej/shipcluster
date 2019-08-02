@@ -1395,7 +1395,7 @@ metadata:
 spec:
   ports:
   - name: service
-    port: 911
+    port: 9112
     protocol: TCP
     targetPort: 9000
   selector:
