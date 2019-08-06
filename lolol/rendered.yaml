@@ -1,0 +1,798 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: airflow
+subjects:
+- kind: ServiceAccount
+  name: airflow
+  namespace: default
+---
+apiVersion: v1
+data:
+  AIRFLOW__CELERY__CELERY_CONCURRENCY: "1"
+  AIRFLOW__CELERY__FLOWER_URL_PREFIX: ""
+  AIRFLOW__CELERY__WORKER_CONCURRENCY: "1"
+  AIRFLOW__CODE__ENABLE_XCOM_PICKLING: "false"
+  AIRFLOW__CORE__BASE_LOG_FOLDER: /usr/local/airflow/logs
+  AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
+  AIRFLOW__CORE__DAGS_FOLDER: /usr/local/airflow/dags
+  AIRFLOW__CORE__DONOT_PICKLE: "false"
+  AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: /usr/local/airflow/logs/scheduler
+  AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+  DO_WAIT_INITDB: "false"
+  EXECUTOR: Celery
+  FERNET_KEY: ""
+  FLOWER_PORT: "5555"
+  POSTGRES_DB: airflow
+  POSTGRES_HOST: airflow-postgresql
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: airflow-redis-master
+  REDIS_PORT: ""
+  TZ: Etc/UTC
+kind: ConfigMap
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow-env
+---
+apiVersion: v1
+data:
+  git-clone.sh: |
+    #!/bin/sh -e
+    REPO=$1
+    REF=$2
+    DIR=$3
+    # Init Containers will re-run on Pod restart. Remove the directory's contents
+    # and reprovision when this happens.
+    if [ -d "$DIR" ]; then
+        rm -rf $( find $DIR -mindepth 1 )
+    fi
+    git clone $REPO $DIR
+    cd $DIR
+    git reset --hard $REF
+kind: ConfigMap
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow-git-clone
+---
+apiVersion: v1
+data: null
+kind: ConfigMap
+metadata:
+  labels:
+    app: postgresql
+    release: airflow
+  name: airflow-postgresql
+---
+apiVersion: v1
+data:
+  ping_local.sh: |-
+    response=$(
+      timeout -s 9 $1 \
+      redis-cli \
+        -a $REDIS_PASSWORD \
+        -h localhost \
+        -p $REDIS_PORT \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+  ping_local_and_master.sh: |-
+    script_dir="$(dirname "$0")"
+    exit_status=0
+    "$script_dir/ping_local.sh" $1 || exit_status=$?
+    "$script_dir/ping_master.sh" $1 || exit_status=$?
+    exit $exit_status
+  ping_master.sh: |-
+    response=$(
+      timeout -s 9 $1 \
+      redis-cli \
+        -a $REDIS_MASTER_PASSWORD \
+        -h $REDIS_MASTER_HOST \
+        -p $REDIS_MASTER_PORT_NUMBER \
+        ping
+    )
+    if [ "$response" != "PONG" ]; then
+      echo "$response"
+      exit 1
+    fi
+kind: ConfigMap
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis-health
+---
+apiVersion: v1
+data:
+  master.conf: |-
+    dir /data
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+  redis.conf: |-
+    # User-supplied configuration:
+    # maxmemory-policy volatile-lru
+  replica.conf: |-
+    dir /data
+    slave-read-only yes
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+kind: ConfigMap
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis
+---
+apiVersion: v1
+data:
+  install-requirements.sh: |
+    #!/bin/sh -e
+    if [ ! -d /usr/local/airflow/dags ]; then
+      echo "No folder /usr/local/airflow/dags"
+      exit 0
+    fi
+    cd /usr/local/airflow/dags
+    if [ -f requirements.txt ]; then
+      pip install --user -r requirements.txt
+    else
+      exit 0
+    fi
+kind: ConfigMap
+metadata:
+  labels:
+    app: airflow
+    release: airflow
+  name: airflow-scripts
+---
+apiVersion: v1
+data:
+  postgres-password: YWlyZmxvdw==
+kind: Secret
+metadata:
+  labels:
+    app: postgresql
+    release: airflow
+  name: airflow-postgresql
+type: Opaque
+---
+apiVersion: v1
+data:
+  redis-password: YWlyZmxvdw==
+kind: Secret
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis
+type: NotSoOpaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: null
+  labels:
+    app: airflow
+    component: flower
+    release: airflow
+  name: airflow-flower
+spec:
+  ports:
+  - name: flower
+    port: 5555
+    protocol: TCP
+    targetPort: 5555
+  selector:
+    app: airflow
+    component: flower
+    release: airflow
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgresql
+    release: airflow
+  name: airflow-postgresql
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: postgresql
+  selector:
+    app: postgresql
+    release: airflow
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis-headless
+spec:
+  clusterIP: None
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: redis
+    release: airflow
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis-master
+spec:
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+  selector:
+    app: redis
+    release: airflow
+    role: master
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: null
+  labels:
+    app: airflow
+    component: web
+    release: airflow
+  name: airflow-web
+spec:
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: airflow
+    component: web
+    release: airflow
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: airflow
+    component: worker
+    release: airflow
+  name: airflow-worker
+spec:
+  clusterIP: None
+  ports:
+  - name: worker
+    port: 8793
+    protocol: TCP
+  selector:
+    app: airflow
+    component: worker
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: airflow
+    component: flower
+    release: airflow
+  name: airflow-flower
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: flower
+      release: airflow
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+      labels:
+        app: airflow
+        component: flower
+        release: airflow
+    spec:
+      containers:
+      - args:
+        - flower
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        envFrom:
+        - configMapRef:
+            name: airflow-env
+        image: puckel/docker-airflow:1.10.3
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: //
+            port: flower
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: airflow-flower
+        ports:
+        - containerPort: 5555
+          name: flower
+          protocol: TCP
+        resources: {}
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: airflow
+    component: scheduler
+    release: airflow
+  name: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: scheduler
+      release: airflow
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
+        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app: airflow
+        component: scheduler
+        release: airflow
+    spec:
+      containers:
+      - args:
+        - bash
+        - -c
+        - |
+          echo 'waiting 10s...' && sleep 10 && mkdir -p /usr/local/airflow/.local/bin && export PATH=/usr/local/airflow/.local/bin:$PATH && echo "executing initdb" && airflow initdb && echo "executing scheduler" && airflow scheduler -n -1
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        envFrom:
+        - configMapRef:
+            name: airflow-env
+        image: puckel/docker-airflow:1.10.3
+        imagePullPolicy: IfNotPresent
+        name: airflow-scheduler
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/local/scripts
+          name: scripts
+      restartPolicy: Always
+      serviceAccountName: airflow
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: airflow-scripts
+        name: scripts
+      - emptyDir: {}
+        name: dags-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: airflow
+    component: web
+    release: airflow
+  name: airflow-web
+spec:
+  minReadySeconds: 120
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: web
+      release: airflow
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
+        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+      labels:
+        app: airflow
+        component: web
+        release: airflow
+    spec:
+      containers:
+      - args:
+        - bash
+        - -c
+        - |
+          echo 'waiting 60s...' && sleep 60 && mkdir -p /usr/local/airflow/.local/bin && export PATH=/usr/local/airflow/.local/bin:$PATH && echo 'executing webserver...' && airflow webserver
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        envFrom:
+        - configMapRef:
+            name: airflow-env
+        image: puckel/docker-airflow:1.10.3
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: web
+          initialDelaySeconds: 360
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: airflow-web
+        ports:
+        - containerPort: 8080
+          name: web
+          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/local/scripts
+          name: scripts
+      restartPolicy: Always
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: airflow-scripts
+        name: scripts
+      - emptyDir: {}
+        name: dags-data
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: postgresql
+    release: airflow
+  name: airflow-postgresql
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+      release: airflow
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        release: airflow
+    spec:
+      containers:
+      - args: []
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: PGUSER
+          value: postgres
+        - name: POSTGRES_DB
+          value: airflow
+        - name: POSTGRES_INITDB_ARGS
+          value: ""
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: postgres:9.6.2
+        imagePullPolicy: ""
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          failureThreshold: 6
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+        name: airflow-postgresql
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data/pgdata
+          name: data
+          subPath: postgresql-db
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: airflow-postgresql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: airflow
+    component: worker
+    release: airflow
+  name: airflow-worker
+spec:
+  podManagementPolicy: Parallel
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: worker
+      release: airflow
+  serviceName: airflow-worker
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
+        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+      labels:
+        app: airflow
+        component: worker
+        release: airflow
+    spec:
+      containers:
+      - args:
+        - bash
+        - -c
+        - |
+          echo 'waiting 60s...' && sleep 60 && mkdir -p /usr/local/airflow/.local/bin && export PATH=/usr/local/airflow/.local/bin:$PATH && echo 'executing worker...' && airflow worker
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        envFrom:
+        - configMapRef:
+            name: airflow-env
+        image: puckel/docker-airflow:1.10.3
+        imagePullPolicy: IfNotPresent
+        name: airflow-worker
+        ports:
+        - containerPort: 8793
+          name: wlog
+          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/local/scripts
+          name: scripts
+      restartPolicy: Always
+      serviceAccountName: airflow
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: airflow-scripts
+        name: scripts
+      - emptyDir: {}
+        name: dags-data
+  updateStrategy:
+    type: RollingUpdate
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  labels:
+    app: redis
+    release: airflow
+  name: airflow-redis-master
+spec:
+  selector:
+    matchLabels:
+      app: redis
+      release: airflow
+      role: master
+  serviceName: airflow-redis-headless
+  template:
+    metadata:
+      annotations:
+        checksum/configmap: 57a1d4e31afee73efee964ffc41e4c69e595ae2674090c8833969831b74e8dc4
+        checksum/health: 2d53c88b5ad7b8d1bbf8ea00e1dcd89ad94969f6e6dcd9b933432c68d0dfb76a
+        checksum/secret: 37892e30085da2d057c1e14fc2e266816dcd9a15a8249b24ca2846ced7ba36e0
+      labels:
+        app: redis
+        chart: redis-7.0.0
+        release: airflow
+        role: master
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - "if [[ -n $REDIS_PASSWORD_FILE ]]; then\n  password_aux=`cat ${REDIS_PASSWORD_FILE}`\n  export REDIS_PASSWORD=$password_aux\nfi\nif [[ ! -f /opt/bitnami/redis/etc/master.conf ]];then\n  cp /opt/bitnami/redis/mounted-etc/master.conf /opt/bitnami/redis/etc/master.conf\nfi\nif [[ ! -f /opt/bitnami/redis/etc/redis.conf ]];then\n  cp /opt/bitnami/redis/mounted-etc/redis.conf /opt/bitnami/redis/etc/redis.conf\nfi          \nARGS=(\"--port\" \"${REDIS_PORT}\")\nARGS+=(\"--requirepass\" \"${REDIS_PASSWORD}\")\nARGS+=(\"--include\" \"/opt/bitnami/redis/etc/redis.conf\")\nARGS+=(\"--include\" \"/opt/bitnami/redis/etc/master.conf\")\n/run.sh ${ARGS[@]}\n"
+        env:
+        - name: REDIS_REPLICATION_MODE
+          value: master
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
+        - name: REDIS_PORT
+          value: "6379"
+        image: docker.io/bitnami/redis:4.0.14
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_local.sh 5
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: airflow-redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_local.sh 5
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: null
+        securityContext:
+          runAsUser: 1001
+        volumeMounts:
+        - mountPath: /health
+          name: health
+        - mountPath: /data
+          name: redis-data
+          subPath: null
+        - mountPath: /opt/bitnami/redis/mounted-etc
+          name: config
+        - mountPath: /opt/bitnami/redis/etc/
+          name: redis-tmp-conf
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: default
+      volumes:
+      - configMap:
+          defaultMode: 493
+          name: airflow-redis-health
+        name: health
+      - configMap:
+          name: airflow-redis
+        name: config
+      - emptyDir: {}
+        name: redis-data
+      - emptyDir: {}
+        name: redis-tmp-conf
+  updateStrategy:
+    type: RollingUpdate
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    app: airflow
+    component: scheduler
+    release: airflow
+  name: airflow-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: airflow
+      component: scheduler
+      release: airflow
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: postgresql
+    release: airflow
+  name: airflow-postgresql
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
