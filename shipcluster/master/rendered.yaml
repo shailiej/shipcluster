@@ -1,0 +1,1202 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: xray
+subjects:
+- kind: ServiceAccount
+  name: xray
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: xray-rabbitmq-ha
+subjects:
+- kind: ServiceAccount
+  name: xray-rabbitmq-ha
+---
+apiVersion: v1
+data:
+  definitions.json: |
+    {
+      "users": [
+        {
+          "name": "guest",
+          "password": "",
+          "tags": "administrator"
+        }
+      ],
+      "permissions": [
+        {
+          "configure": ".*",
+          "read": ".*",
+          "user": "guest",
+          "vhost": "/",
+          "write": ".*"
+        }
+      ],
+      "policies": [
+        {
+          "apply-to": "all",
+          "definition": {
+            "ha-mode": "all",
+            "ha-sync-mode": "automatic"
+          },
+          "name": "ha-all",
+          "pattern": ".",
+          "priority": 0,
+          "vhost": "/"
+        }
+      ],
+      "vhosts": [
+        {
+          "name": "/"
+        }
+      ]
+    }
+  enabled_plugins: |
+    [
+      rabbitmq_consistent_hash_exchange,
+      rabbitmq_federation,
+      rabbitmq_federation_management,
+      rabbitmq_management,
+      rabbitmq_peer_discovery_k8s,
+      rabbitmq_shovel,
+      rabbitmq_shovel_management
+    ].
+  rabbitmq.conf: |
+    ## RabbitMQ configuration
+    ## Ref: https://github.com/rabbitmq/rabbitmq-server/blob/master/docs/rabbitmq.conf.example
+
+    ## Clustering
+    cluster_formation.peer_discovery_backend  = rabbit_peer_discovery_k8s
+    cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+    cluster_formation.k8s.address_type = hostname
+    cluster_formation.node_cleanup.interval = 10
+    cluster_formation.node_cleanup.only_log_warning = false
+    cluster_partition_handling = autoheal
+
+    ## The default "guest" user is only permitted to access the server
+    ## via a loopback interface (e.g. localhost)
+    loopback_users.guest = false
+
+    ## Memory-based Flow Control threshold
+    vm_memory_high_watermark.absolute = 500MB
+
+    management.load_definitions = /etc/rabbitmq/definitions.json
+kind: ConfigMap
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray-rabbitmq-ha
+---
+apiVersion: v1
+data:
+  setup.sh: |
+    #!/bin/sh
+    # Setup script for Xray microservice
+
+    SCRIPTS_DIR=/scripts
+    XRAYCONFIGPATH=/var/opt/jfrog/xray/data
+    XRAY_CONFIG_DIR=${XRAYCONFIGPATH}/config
+    XRAY_CONFIG_FILE=${XRAY_CONFIG_DIR}/xray_config.yaml
+
+    echo "Creating directories"
+    mkdir -pv ${XRAY_CONFIG_DIR}
+
+    # Wait for DBs to be ready
+    echo "Waiting for DBs..."
+    until nc -z -w 2 xray-postgresql 5432 && echo postgresql ok; do
+      sleep 2;
+    done;
+    until nc -z -w 2 xray-mongodb 27017 && echo mongodb ok; do
+      sleep 2;
+    done;
+    until nc -z -w 2 xray-rabbitmq-ha 5672 && echo rabbitmq ok; do
+      sleep 2;
+    done;
+
+    # Prepare Xray config
+    echo "Preparing Xray config (${XRAY_CONFIG_FILE})"
+    if [ -f ${XRAY_CONFIG_FILE} ]; then
+      echo "Config exist. Backing it up..."
+      cp -vf ${XRAY_CONFIG_FILE} ${XRAY_CONFIG_FILE}-$(date +%Y%m%d-%H%M%S)
+    fi
+
+    # Creating Mongodb URL
+    MONGODB_URL="mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@xray-mongodb:27017/?authSource=${MONGODB_DATABASE}\&authMechanism=SCRAM-SHA-1"
+
+    # Creating PostgreSQL URL
+    POSTGRESS_URL="postgres://${POSTGRES_USER}:${POSTGRESS_PASSWORD}@xray-postgresql:5432/${POSTGRESS_DB}?sslmode=disable"
+
+    # Creating Rabbitmq-Ha URL
+    RABBITMQ_URL="amqp://${RABBITMQ_USER}:${RABBITMQ_DEFAULT_PASS}@xray-rabbitmq-ha:5672/"
+    cp -vf ${SCRIPTS_DIR}/xray_config.yaml ${XRAY_CONFIG_FILE}
+
+    # Preparing xray_config.yaml
+    sed -i "s RABBITMQ_URL ${RABBITMQ_URL} " ${XRAY_CONFIG_FILE}
+    sed -i "s MONGODB_URL ${MONGODB_URL} " ${XRAY_CONFIG_FILE}
+    sed -i "s POSTGRESS_URL ${POSTGRESS_URL} " ${XRAY_CONFIG_FILE}
+  xray_config.yaml: |
+    # Generated Xray config
+    ---
+        ver:            1.0
+        XrayServerPort: "8000"
+        mqBaseUrl:      "RABBITMQ_URL"
+        mongoUrl:       "MONGODB_URL"
+        postgresqlUrl:  "POSTGRESS_URL"
+        stdOutEnabled:  true
+        skipEntLicCheckForCloud: true
+    # End generated config
+kind: ConfigMap
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray-setup
+---
+apiVersion: v1
+data:
+  master-key: RkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRg==
+kind: Secret
+metadata:
+  labels:
+    app: xray
+    release: xray
+  name: xray-master-key
+type: Opaque
+---
+apiVersion: v1
+data:
+  mongodb-password: OENoVHYzcmM2bw==
+  mongodb-root-password: dmpQclA3bEpFYg==
+kind: Secret
+metadata:
+  labels:
+    app: mongodb
+    release: xray
+  name: xray-mongodb
+type: Opaque
+---
+apiVersion: v1
+data:
+  postgres-password: WDhmV3ZsNjB1Nw==
+kind: Secret
+metadata:
+  labels:
+    app: xray-postgresql
+    release: xray
+  name: xray-postgresql
+type: Opaque
+---
+apiVersion: v1
+data:
+  rabbitmq-erlang-cookie: WFJBWVJBQkJJVE1RQ0xVU1RFUg==
+  rabbitmq-password: QVFARmJIUCpOQlQ/M3JsdFJVWC5zWjI=
+kind: Secret
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mongodb
+    release: xray
+  name: xray-mongodb
+spec:
+  ports:
+  - name: mongodb
+    port: 27017
+    targetPort: mongodb
+  selector:
+    app: mongodb
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: xray-postgresql
+    release: xray
+  name: xray-postgresql
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: postgresql
+  selector:
+    app: xray-postgresql
+  type: lol
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha-discovery
+spec:
+  clusterIP: None
+  ports:
+  - name: http
+    port: 15672
+    protocol: TCP
+    targetPort: http
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: amqp
+  - name: epmd
+    port: 4369
+    protocol: TCP
+    targetPort: epmd
+  selector:
+    app: rabbitmq-ha
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+spec:
+  clusterIP: ""
+  ports:
+  - name: http
+    port: 15672
+    protocol: TCP
+    targetPort: http
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: amqp
+  - name: epmd
+    port: 4369
+    protocol: TCP
+    targetPort: epmd
+  selector:
+    app: rabbitmq-ha
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: xray
+    component: xray-analysis
+    release: xray
+  name: xray-xray-analysis
+spec:
+  ports:
+  - name: http
+    port: 7000
+    protocol: TCP
+    targetPort: 7000
+  selector:
+    app: xray
+    component: xray-analysis
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: xray
+    component: xray-indexer
+    release: xray
+  name: xray-xray-indexer
+spec:
+  ports:
+  - name: http
+    port: 7002
+    protocol: TCP
+    targetPort: 7002
+  selector:
+    app: xray
+    component: xray-indexer
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: xray
+    component: xray-persist
+    release: xray
+  name: xray-xray-persist
+spec:
+  ports:
+  - name: http
+    port: 7003
+    protocol: TCP
+    targetPort: 7003
+  selector:
+    app: xray
+    component: xray-persist
+    release: xray
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: xray
+    component: xray-server
+    release: xray
+  name: xray-xray-server
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: xray
+    component: xray-server
+    release: xray
+  type: LoadBalancer
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: xray-analysis
+    component: xray-analysis
+    release: xray
+  name: xray-xray-analysis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xray
+      component: xray-analysis
+      release: xray
+  template:
+    metadata:
+      labels:
+        app: xray
+        component: xray-analysis
+        release: xray
+    spec:
+      containers:
+      - env:
+        - name: XRAYCONFIGPATH
+          value: /var/opt/jfrog/xray/data
+        - name: XRAY_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: master-key
+              name: xray-master-key
+        - name: XRAY_HA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: docker.bintray.io/jfrog/xray-analysis:2.3.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /debug/pprof/
+            port: 7000
+          initialDelaySeconds: 90
+          periodSeconds: 10
+        name: xray-analysis
+        ports:
+        - containerPort: 7000
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /debug/pprof/
+            port: 7000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          cp -fv /scripts/setup.sh /var/opt/jfrog/xray/data; chmod +x /var/opt/jfrog/xray/data/setup.sh; /var/opt/jfrog/xray/data/setup.sh;
+        env:
+        - name: MONGODB_USER
+          value: xray
+        - name: MONGODB_DATABASE
+          value: xray
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-password
+              name: xray-mongodb
+        - name: POSTGRES_USER
+          value: xray
+        - name: POSTGRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: xray-postgresql
+        - name: POSTGRESS_DB
+          value: xraydb
+        - name: RABBITMQ_USER
+          value: guest
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-erlang-cookie
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-password
+              name: xray-rabbitmq-ha
+        image: alpine:3.6
+        name: init-wait
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+        - mountPath: /scripts
+          name: setup
+      securityContext:
+        fsGroup: 1035
+        runAsUser: 1035
+      serviceAccountName: xray
+      volumes:
+      - emptyDir:
+          sizeLimit: 10Gi
+        name: data-volume
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: config-volume
+      - configMap:
+          name: xray-setup
+        name: setup
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: xray
+    component: xray-indexer
+    release: xray
+  name: xray-xray-indexer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xray
+      component: xray-indexer
+      release: xray
+  template:
+    metadata:
+      labels:
+        app: xray
+        component: xray-indexer
+        release: xray
+    spec:
+      containers:
+      - env:
+        - name: XRAYCONFIGPATH
+          value: /var/opt/jfrog/xray/data
+        - name: XRAY_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: master-key
+              name: xray-master-key
+        - name: XRAY_HA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: docker.bintray.io/jfrog/xray-indexer:2.3.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /debug/pprof/
+            port: 7002
+          initialDelaySeconds: 90
+          periodSeconds: 10
+        name: xray-indexer
+        ports:
+        - containerPort: 7002
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /debug/pprof/
+            port: 7002
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          cp -fv /scripts/setup.sh /var/opt/jfrog/xray/data; chmod +x /var/opt/jfrog/xray/data/setup.sh; /var/opt/jfrog/xray/data/setup.sh;
+        env:
+        - name: MONGODB_USER
+          value: xray
+        - name: MONGODB_DATABASE
+          value: xray
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-password
+              name: xray-mongodb
+        - name: POSTGRES_USER
+          value: xray
+        - name: POSTGRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: xray-postgresql
+        - name: POSTGRESS_DB
+          value: xraydb
+        - name: RABBITMQ_USER
+          value: guest
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-erlang-cookie
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-password
+              name: xray-rabbitmq-ha
+        image: alpine:3.6
+        name: init-wait
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+        - mountPath: /scripts
+          name: setup
+      securityContext:
+        fsGroup: 1035
+        runAsUser: 1035
+      serviceAccountName: xray
+      volumes:
+      - emptyDir:
+          sizeLimit: 10Gi
+        name: data-volume
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: config-volume
+      - configMap:
+          name: xray-setup
+        name: setup
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: xray
+    component: xray-persist
+    release: xray
+  name: xray-xray-persist
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xray
+      component: xray-persist
+      release: xray
+  template:
+    metadata:
+      labels:
+        app: xray
+        component: xray-persist
+        release: xray
+    spec:
+      containers:
+      - env:
+        - name: XRAYCONFIGPATH
+          value: /var/opt/jfrog/xray/data
+        - name: XRAY_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: master-key
+              name: xray-master-key
+        - name: XRAY_HA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: docker.bintray.io/jfrog/xray-persist:2.3.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /debug/pprof/
+            port: 7003
+          initialDelaySeconds: 90
+          periodSeconds: 10
+        name: xray-persist
+        ports:
+        - containerPort: 7003
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /debug/pprof/
+            port: 7003
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          cp -fv /scripts/setup.sh /var/opt/jfrog/xray/data; chmod +x /var/opt/jfrog/xray/data/setup.sh; /var/opt/jfrog/xray/data/setup.sh;
+        env:
+        - name: MONGODB_USER
+          value: xray
+        - name: MONGODB_DATABASE
+          value: xray
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-password
+              name: xray-mongodb
+        - name: POSTGRES_USER
+          value: xray
+        - name: POSTGRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: xray-postgresql
+        - name: POSTGRESS_DB
+          value: xraydb
+        - name: RABBITMQ_USER
+          value: guest
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-erlang-cookie
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-password
+              name: xray-rabbitmq-ha
+        image: alpine:3.6
+        name: init-wait
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+        - mountPath: /scripts
+          name: setup
+      securityContext:
+        fsGroup: 1035
+        runAsUser: 1035
+      serviceAccountName: xray
+      volumes:
+      - emptyDir:
+          sizeLimit: 10Gi
+        name: data-volume
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: config-volume
+      - configMap:
+          name: xray-setup
+        name: setup
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: xray
+    component: xray-server
+    release: xray
+  name: xray-xray-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xray
+      component: xray-server
+      release: xray
+  template:
+    metadata:
+      labels:
+        app: xray
+        component: xray-server
+        release: xray
+    spec:
+      containers:
+      - env:
+        - name: XRAYCONFIGPATH
+          value: /var/opt/jfrog/xray/data
+        - name: XRAY_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: master-key
+              name: xray-master-key
+        - name: XRAY_HA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: docker.bintray.io/jfrog/xray-server:2.3.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 90
+          periodSeconds: 10
+        name: xray-server
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |
+          cp -fv /scripts/setup.sh /var/opt/jfrog/xray/data; chmod +x /var/opt/jfrog/xray/data/setup.sh; /var/opt/jfrog/xray/data/setup.sh;
+        env:
+        - name: MONGODB_USER
+          value: xray
+        - name: MONGODB_DATABASE
+          value: xray
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-password
+              name: xray-mongodb
+        - name: POSTGRES_USER
+          value: xray
+        - name: POSTGRESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: xray-postgresql
+        - name: POSTGRESS_DB
+          value: xraydb
+        - name: RABBITMQ_USER
+          value: guest
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-erlang-cookie
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-password
+              name: xray-rabbitmq-ha
+        image: alpine:3.6
+        name: init-wait
+        volumeMounts:
+        - mountPath: /var/opt/jfrog/xray/data
+          name: data-volume
+        - mountPath: /scripts
+          name: setup
+      securityContext:
+        fsGroup: 1035
+        runAsUser: 1035
+      serviceAccountName: xray
+      volumes:
+      - emptyDir:
+          sizeLimit: 10Gi
+        name: data-volume
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: config-volume
+      - configMap:
+          name: xray-setup
+        name: setup
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: mongodb
+    release: xray
+  name: xray-mongodb
+spec:
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        release: xray
+    spec:
+      containers:
+      - env:
+        - name: MONGODB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-root-password
+              name: xray-mongodb
+        - name: MONGODB_USERNAME
+          value: xray
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb-password
+              name: xray-mongodb
+        - name: MONGODB_DATABASE
+          value: xray
+        - name: MONGODB_EXTRA_FLAGS
+          value: --wiredTigerCacheSizeGB=1
+        image: docker.io/bitnami/mongodb:3.6.3
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - mongo
+            - --eval
+            - db.adminCommand('ping')
+          failureThreshold: 6
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: xray-mongodb
+        ports:
+        - containerPort: 27017
+          name: mongodb
+        readinessProbe:
+          exec:
+            command:
+            - mongo
+            - --eval
+            - db.adminCommand('ping')
+          failureThreshold: 6
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /bitnami/mongodb
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: xray-mongodb
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: xray-postgresql
+    release: xray
+  name: xray-postgresql
+spec:
+  template:
+    metadata:
+      labels:
+        app: xray-postgresql
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          value: xray
+        - name: PGUSER
+          value: xray
+        - name: POSTGRES_DB
+          value: xraydb
+        - name: POSTGRES_INITDB_ARGS
+          value: ""
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: xray-postgresql
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: postgres:9.6.2
+        imagePullPolicy: ""
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          failureThreshold: 6
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+        name: xray-postgresql
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 1Gi
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data/pgdata
+          name: data
+          subPath: postgresql-db
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: xray-postgresql
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  labels:
+    app: rabbitmq-ha
+    release: xray
+  name: xray-rabbitmq-ha
+spec:
+  replicas: 1
+  serviceName: xray-rabbitmq-ha-discovery
+  template:
+    metadata:
+      annotations: null
+      labels:
+        app: rabbitmq-ha
+        release: xray
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: rabbitmq-ha
+                  release: xray
+              topologyKey: kubernetes.io/hostname
+            weight: 1
+      containers:
+      - env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: RABBITMQ_USE_LONGNAME
+          value: "true"
+        - name: RABBITMQ_NODENAME
+          value: rabbit@$(MY_POD_NAME).xray-rabbitmq-ha-discovery.default.svc.cluster.local
+        - name: K8S_HOSTNAME_SUFFIX
+          value: .xray-rabbitmq-ha-discovery.default.svc.cluster.local
+        - name: K8S_SERVICE_NAME
+          value: xray-rabbitmq-ha-discovery
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-erlang-cookie
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_USER
+          value: guest
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rabbitmq-password
+              name: xray-rabbitmq-ha
+        - name: RABBITMQ_DEFAULT_VHOST
+          value: /
+        image: rabbitmq:3.7-alpine
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - rabbitmqctl
+            - status
+          failureThreshold: 6
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+        name: rabbitmq-ha
+        ports:
+        - containerPort: 4369
+          name: epmd
+          protocol: TCP
+        - containerPort: 5672
+          name: amqp
+          protocol: TCP
+        - containerPort: 15672
+          name: http
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - rabbitmqctl
+            - status
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/rabbitmq
+          name: data
+        - mountPath: /etc/rabbitmq
+          name: config
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - cp /configmap/* /etc/rabbitmq; rm -f /var/lib/rabbitmq/.erlang.cookie
+        image: busybox
+        name: copy-rabbitmq-config
+        volumeMounts:
+        - mountPath: /configmap
+          name: configmap
+        - mountPath: /etc/rabbitmq
+          name: config
+        - mountPath: /var/lib/rabbitmq
+          name: data
+      serviceAccountName: xray-rabbitmq-ha
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - emptyDir: {}
+        name: config
+      - configMap:
+          name: xray-rabbitmq-ha
+        name: configmap
+  updateStrategy:
+    type: OnDelete
+  volumeClaimTemplates:
+  - metadata:
+      annotations: null
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: xray-mongodb
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: xray-postgresql
+    release: xray
+  name: xray-postgresql
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
