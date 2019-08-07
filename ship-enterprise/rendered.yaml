@@ -1713,7 +1713,7 @@ spec:
           value: IfNotPresent
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -1812,7 +1812,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -1868,7 +1868,7 @@ spec:
               name: ship-enterprise-postgres
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         resources:
@@ -1957,7 +1957,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -2051,7 +2051,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -2131,7 +2131,7 @@ spec:
           value: ""
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:fd8c74e
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:856157b
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -3117,6 +3117,64 @@ spec:
       - name: watch_id
         type: text
       primaryKey: []
+---
+apiVersion: schemas.schemahero.io/v1alpha2
+kind: Table
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: preflight-result
+spec:
+  database: ship-cluster-postgres
+  name: preflight_result
+  requires: []
+  schema:
+    postgres:
+      columns:
+      - constraints:
+          notNull: true
+        name: id
+        type: text
+      - constraints:
+          notNull: true
+        name: watch_id
+        type: text
+      - constraints:
+          notNull: true
+        name: result
+        type: text
+      - constraints:
+          notNull: true
+        name: created_at
+        type: timestamp without time zone
+      primaryKey:
+      - id
+---
+apiVersion: schemas.schemahero.io/v1alpha2
+kind: Table
+metadata:
+  name: preflight-spec
+spec:
+  database: ship-cluster-postgres
+  name: preflight_spec
+  schema:
+    postgres:
+      columns:
+      - constraints:
+          notNull: true
+        name: watch_id
+        type: text
+      - constraints:
+          notNull: true
+        name: sequence
+        type: int
+      - constraints:
+          notNull: true
+        name: spec
+        type: text
+      primaryKey:
+      - watch_id
+      - sequence
 ---
 apiVersion: schemas.schemahero.io/v1alpha2
 kind: Table
