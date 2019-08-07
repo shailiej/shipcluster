@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tomcat
+    release: tomcat-cattom
+  name: tomcat-cattom
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: tomcat
+    release: tomcat-cattom
+  type: LoadBalancer
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: tomcat
+    release: tomcat-cattom
+  name: tomcat-cattom
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: tomcat
+      release: tomcat-cattom
+  template:
+    metadata:
+      labels:
+        app: tomcat
+        release: tomcat-cattom
+    spec:
+      containers:
+      - image: tomcat:7.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /sample
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        name: tomcat
+        ports:
+        - containerPort: 8080
+          hostPort: 8009
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /sample
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        resources: {}
+        volumeMounts:
+        - mountPath: /usr/local/tomcat/webapps
+          name: app-volume
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - cp /*.war /app
+        image: ananwaresystems/webarchive:1.0
+        imagePullPolicy: IfNotPresent
+        name: war
+        volumeMounts:
+        - mountPath: /app
+          name: app-volume
+      volumes:
+      - emptyDir: {}
+        name: app-volume
