@@ -357,7 +357,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: a2ea675ce7e31598b890283efc3ebc61e65729c939b2c2f53462caa457a24431
+        checksum/config-env: 1459610a35d65d1318ed3c42c71da710d1ca416ac679ed72372e707399e743f0
       labels:
         app: airflow
         component: flower
@@ -414,9 +414,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: a2ea675ce7e31598b890283efc3ebc61e65729c939b2c2f53462caa457a24431
-        checksum/config-git-clone: 5509f12eee8e96297bba14274d5c6c21fdc6f472e1779a1eadaa4bc115d6d73b
-        checksum/config-scripts: d1806ae970b46377bbd1583c3507fedd7b5fa672962040c97a1530549a4ed100
+        checksum/config-env: 1459610a35d65d1318ed3c42c71da710d1ca416ac679ed72372e707399e743f0
+        checksum/config-git-clone: 4aeb7948356ba5d1cba5bce33a037d323bb809c9761061c16197dc8c969aa6e1
+        checksum/config-scripts: be1df378ae31a0d947be3a5ae85a5e78015a5d19a1ebf56a5ec997aeb154b8bd
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -477,9 +477,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: a2ea675ce7e31598b890283efc3ebc61e65729c939b2c2f53462caa457a24431
-        checksum/config-git-clone: 5509f12eee8e96297bba14274d5c6c21fdc6f472e1779a1eadaa4bc115d6d73b
-        checksum/config-scripts: d1806ae970b46377bbd1583c3507fedd7b5fa672962040c97a1530549a4ed100
+        checksum/config-env: 1459610a35d65d1318ed3c42c71da710d1ca416ac679ed72372e707399e743f0
+        checksum/config-git-clone: 4aeb7948356ba5d1cba5bce33a037d323bb809c9761061c16197dc8c969aa6e1
+        checksum/config-scripts: be1df378ae31a0d947be3a5ae85a5e78015a5d19a1ebf56a5ec997aeb154b8bd
       labels:
         app: airflow
         component: web
@@ -513,6 +513,15 @@ spec:
         - containerPort: 8080
           name: web
           protocol: TCP
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: web
+          initialDelaySeconds: 360
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 1
         resources: {}
         volumeMounts:
         - mountPath: /usr/local/scripts
@@ -623,9 +632,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: a2ea675ce7e31598b890283efc3ebc61e65729c939b2c2f53462caa457a24431
-        checksum/config-git-clone: 5509f12eee8e96297bba14274d5c6c21fdc6f472e1779a1eadaa4bc115d6d73b
-        checksum/config-scripts: d1806ae970b46377bbd1583c3507fedd7b5fa672962040c97a1530549a4ed100
+        checksum/config-env: 1459610a35d65d1318ed3c42c71da710d1ca416ac679ed72372e707399e743f0
+        checksum/config-git-clone: 4aeb7948356ba5d1cba5bce33a037d323bb809c9761061c16197dc8c969aa6e1
+        checksum/config-scripts: be1df378ae31a0d947be3a5ae85a5e78015a5d19a1ebf56a5ec997aeb154b8bd
       labels:
         app: airflow
         component: worker
