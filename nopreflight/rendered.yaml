@@ -82,9 +82,21 @@ spec:
         - --listen-metrics=:3031
         image: docker.io/fluxcd/flux:1.13.3
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/flux/v6/identity.pub
+            port: 3030
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
         name: flux
         ports:
         - containerPort: 3030
+        readinessProbe:
+          httpGet:
+            path: /api/flux/v6/identity.pub
+            port: 3030
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
         resources:
           requests:
             cpu: 50m
