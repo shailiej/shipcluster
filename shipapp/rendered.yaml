@@ -154,29 +154,9 @@ metadata:
 spec:
 - secret:
     includeValue: false
-    key: uri
-    name: myapp-postgres
+    key: token
+    name: app.yaml
     namespace: default
-- logs:
-    limits:
-      maxAge: 30d
-      maxLines: 10000
-    namespace: kube-system
-    selector:
-    - name=cilium-operator
-- run:
-    args:
-    - www.google.com
-    collectorName: ping-google
-    command:
-    - ping
-    image: flungo/netutils
-    namespace: default
-    timeout: 5s
-- http:
-    collectorName: echo-ip
-    get:
-      url: https://api.replicated.com/market/v1/echo/ip
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
