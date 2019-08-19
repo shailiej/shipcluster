@@ -44,8 +44,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: RFIxV0p6THk1aA==
-  mariadb-root-password: elg0RWhrb0xkSg==
+  mariadb-password: aWE2MkpvMGhTRQ==
+  mariadb-root-password: QUd3SE42TE9EdA==
 kind: Secret
 metadata:
   labels:
@@ -56,7 +56,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: Tm1aSVo2cVdIcQ==
+  ghost-password: ZHZTRWVvOER5Yw==
 kind: Secret
 metadata:
   labels:
@@ -233,7 +233,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-0itsm
+  name: ghost-mariadb-test-7xhr3
 spec:
   containers:
   - command:
