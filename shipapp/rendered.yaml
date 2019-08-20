@@ -152,11 +152,14 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- secret:
-    includeValue: false
-    key: token
-    name: app.yaml
-    namespace: default
+- logs:
+    limits:
+      maxAge: 30d
+      maxLines: 10000
+    namespace: kube-system
+    selector:
+    - component=kube-controller-manager
+    - tier=control-plane
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
