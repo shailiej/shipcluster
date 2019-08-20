@@ -152,16 +152,14 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- secret:
-    includeValue: true
-    key: ca.crt
-    name: flux-token-g8scp
-    namespace: default
-- secret:
-    includeValue: false
-    key: token
-    name: flux-token-g8scp
-    namespace: default
+- logs:
+    limits:
+      maxAge: 30d
+      maxLines: 10000
+    namespace: kube-system
+    selector:
+    - component=kube-controller-manager
+    - tier=control-plane
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
