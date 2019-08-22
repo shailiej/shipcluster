@@ -152,16 +152,17 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- run:
-    args:
-    - -n
-    - -a
-    collectorName: ping-google
-    command:
-    - netstat
-    image: flungo/netutils
-    namespace: default
-    timeout: 5s
+  collectors:
+  - run:
+      args:
+      - -n
+      - -a
+      collectorName: netstat
+      command:
+      - netstat
+      image: flungo/netutils
+      namespace: default
+      timeout: 5s
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
