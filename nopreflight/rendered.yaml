@@ -80,7 +80,7 @@ spec:
         - --git-url=git@github.com:weaveworks/flux-get-started
         - --git-branch=master
         - --listen-metrics=:3031
-        image: docker.io/fluxcd/flux:1.13.3
+        image: docker.io/fluxcd/flux:1.14.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -152,14 +152,16 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- logs:
-    limits:
-      maxAge: 30d
-      maxLines: 10000
-    namespace: kube-system
-    selector:
-    - component=kube-controller-manager
-    - tier=control-plane
+- run:
+    args:
+    - -n
+    - -a
+    collectorName: ping-google
+    command:
+    - netstat
+    image: flungo/netutils
+    namespace: default
+    timeout: 5s
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
