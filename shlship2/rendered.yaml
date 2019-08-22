@@ -80,7 +80,7 @@ spec:
         - --git-url=git@github.com:weaveworks/flux-get-started
         - --git-branch=master
         - --listen-metrics=:3031
-        image: docker.io/fluxcd/flux:1.13.3
+        image: docker.io/fluxcd/flux:1.14.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -152,31 +152,32 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- secret:
-    includeValue: false
-    key: uri
-    name: myapp-postgres
-    namespace: default
-- logs:
-    limits:
-      maxAge: 30d
-      maxLines: 10000
-    namespace: kube-system
-    selector:
-    - name=cilium-operator
-- run:
-    args:
-    - www.google.com
-    collectorName: ping-google
-    command:
-    - ping
-    image: flungo/netutils
-    namespace: default
-    timeout: 5s
-- http:
-    collectorName: echo-ip
-    get:
-      url: https://api.replicated.com/market/v1/echo/ip
+  collectors:
+  - secret:
+      includeValue: false
+      key: uri
+      name: myapp-postgres
+      namespace: default
+  - logs:
+      limits:
+        maxAge: 30d
+        maxLines: 10000
+      namespace: kube-system
+      selector:
+      - name=cilium-operator
+  - run:
+      args:
+      - www.google.com
+      collectorName: ping-google
+      command:
+      - ping
+      image: flungo/netutils
+      namespace: default
+      timeout: 5s
+  - http:
+      collectorName: echo-ip
+      get:
+        url: https://api.replicated.com/market/v1/echo/ip
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
