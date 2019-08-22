@@ -1,0 +1,14 @@
+--- 
+apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+metadata: 
+  name: collector-sample
+spec: 
+  - exec: 
+      args: ["-aeaf"]
+      command: ["ps"]
+      namespace: kube-system
+      selector:
+      - component=etcd
+      - tier=control-plane 
+      timeout: 10s

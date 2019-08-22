@@ -1,0 +1,12 @@
+apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+metadata:
+  name: collector-sample
+spec:
+  - run:
+      collectorName: ping-google
+      namespace: default
+      image: flungo/netutils
+      command: ["netstat"]
+      args: ["-n","-a"]
+      timeout: 5s

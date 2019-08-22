@@ -1,0 +1,10 @@
+--- 
+apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+metadata: 
+  name: collector-sample
+spec: 
+  - http: 
+      collectorName: fortunecookie
+      get: 
+        url: "https://quotes.rest/qod"
