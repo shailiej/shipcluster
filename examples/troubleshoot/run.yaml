@@ -3,10 +3,11 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-  - run:
-      collectorName: netstat
-      namespace: default
-      image: flungo/netutils
-      command: ["netstat"]
-      args: ["-n","-a"]
-      timeout: 5s
+  collectors:
+    - run:
+        collectorName: netstat
+        namespace: default
+        image: flungo/netutils
+        command: ["netstat"]
+        args: ["-n","-a"]
+        timeout: 5s
