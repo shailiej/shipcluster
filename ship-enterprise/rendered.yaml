@@ -1164,16 +1164,16 @@ apiVersion: v1
 data:
   start-ship-cluster-ui.sh: |
     #!/bin/bash
-    sed -i 's/###_GRAPHQL_ENDPOINT_###/https:\/\/qa-testing\/graphql/g' /usr/share/nginx/html/index.html
-    sed -i 's/###_REST_ENDPOINT_###/https:\/\/qa-testing\/api/g' /usr/share/nginx/html/index.html
+    sed -i 's/###_GRAPHQL_ENDPOINT_###/https:\/\/testing\/graphql/g' /usr/share/nginx/html/index.html
+    sed -i 's/###_REST_ENDPOINT_###/https:\/\/testing\/api/g' /usr/share/nginx/html/index.html
     sed -i 's/###_GITHUB_CLIENT_ID_###//g' /usr/share/nginx/html/index.html
-    sed -i 's/###_SHIPDOWNLOAD_ENDPOINT_###/https:\/\/qa-testing\/api\/v1\/download/g' /usr/share/nginx/html/index.html
-    sed -i 's/###_SHIPINIT_ENDPOINT_###/https:\/\/qa-testing\/api\/v1\/init\//g' /usr/share/nginx/html/index.html
-    sed -i 's/###_SHIPUPDATE_ENDPOINT_###/https:\/\/qa-testing\/api\/v1\/update\//g' /usr/share/nginx/html/index.html
-    sed -i 's/###_SHIPEDIT_ENDPOINT_###/https:\/\/qa-testing\/api\/v1\/edit\//g' /usr/share/nginx/html/index.html
-    sed -i 's/###_GITHUB_REDIRECT_URI_###/https:\/\/qa-testing\/auth\/github\/callback/g' /usr/share/nginx/html/index.html
+    sed -i 's/###_SHIPDOWNLOAD_ENDPOINT_###/https:\/\/testing\/api\/v1\/download/g' /usr/share/nginx/html/index.html
+    sed -i 's/###_SHIPINIT_ENDPOINT_###/https:\/\/testing\/api\/v1\/init\//g' /usr/share/nginx/html/index.html
+    sed -i 's/###_SHIPUPDATE_ENDPOINT_###/https:\/\/testing\/api\/v1\/update\//g' /usr/share/nginx/html/index.html
+    sed -i 's/###_SHIPEDIT_ENDPOINT_###/https:\/\/testing\/api\/v1\/edit\//g' /usr/share/nginx/html/index.html
+    sed -i 's/###_GITHUB_REDIRECT_URI_###/https:\/\/testing\/auth\/github\/callback/g' /usr/share/nginx/html/index.html
     sed -i 's/###_GITHUB_INSTALL_URL_###//g' /usr/share/nginx/html/index.html
-    sed -i 's/###_INSTALL_ENDPOINT_###/https:\/\/qa-testing\/api\/install/g' /usr/share/nginx/html/index.html
+    sed -i 's/###_INSTALL_ENDPOINT_###/https:\/\/testing\/api\/install/g' /usr/share/nginx/html/index.html
 
     nginx -g "daemon off;"
 kind: ConfigMap
@@ -1570,7 +1570,7 @@ spec:
           value: |
             true
         - name: SHIP_API_ADVERTISE_ENDPOINT
-          value: http://docker.for.mac.localhost:30065
+          value: http://localhost:30065
         - name: GITHUB_CLIENT_ID
           valueFrom:
             secretKeyRef:
@@ -1592,7 +1592,7 @@ spec:
           value: https://pg.replicated.com/graphql
         - name: TRACER_NAME
           value: ship-cluster-api
-        image: registry.replicated.com/ship-enterprise/ship-cluster-api:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-api:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-api
         ports:
@@ -1634,7 +1634,7 @@ spec:
       containers:
       - args:
         - /scripts/start-ship-cluster-ui.sh
-        image: registry.replicated.com/ship-enterprise/ship-cluster-ui:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-ui:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-ui
         ports:
@@ -1713,7 +1713,7 @@ spec:
           value: IfNotPresent
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -1780,7 +1780,7 @@ spec:
         - name: SHIP_IMAGE
           value: replicated/ship
         - name: SHIP_TAG
-          value: 0.49.1
+          value: 0.50.0
         - name: SHIP_PULL_POLICY
           value: IfNotPresent
         - name: LOG_LEVEL
@@ -1812,7 +1812,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -1868,7 +1868,7 @@ spec:
               name: ship-enterprise-postgres
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         resources:
@@ -1925,7 +1925,7 @@ spec:
         - name: SHIP_IMAGE
           value: replicated/ship
         - name: SHIP_TAG
-          value: 0.49.1
+          value: 0.50.0
         - name: SHIP_PULL_POLICY
           value: IfNotPresent
         - name: LOG_LEVEL
@@ -1957,7 +1957,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -2019,7 +2019,7 @@ spec:
         - name: SHIP_IMAGE
           value: replicated/ship
         - name: SHIP_TAG
-          value: 0.49.1
+          value: 0.50.0
         - name: SHIP_PULL_POLICY
           value: IfNotPresent
         - name: LOG_LEVEL
@@ -2051,7 +2051,7 @@ spec:
               name: github-app-private-key
         - name: GITHUB_INTEGRATION_ID
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -2100,7 +2100,7 @@ spec:
         - name: SHIP_IMAGE
           value: replicated/ship
         - name: SHIP_TAG
-          value: 0.49.1
+          value: 0.50.0
         - name: SHIP_PULL_POLICY
           value: IfNotPresent
         - name: LOG_LEVEL
@@ -2131,7 +2131,7 @@ spec:
           value: ""
         - name: LOG_FORMAT
           value: json
-        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-worker:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-worker
         ports:
@@ -2145,9 +2145,9 @@ spec:
           periodSeconds: 2
         resources:
           limits:
-            memory: 512Mi
+            memory: 2048Mi
           requests:
-            memory: 256Mi
+            memory: 1024Mi
       imagePullSecrets:
       - name: replicatedregistrykey
       restartPolicy: Always
@@ -2601,7 +2601,7 @@ spec:
         - ensure-local-cluster
         env:
         - name: SHIP_API_ADVERTISE_ENDPOINT
-          value: https://qa-testing
+          value: https://testing
         - name: POSTGRES_URI
           valueFrom:
             secretKeyRef:
@@ -2609,7 +2609,7 @@ spec:
               name: ship-enterprise-postgres
         - name: ENSURE_LOCAL_CLUSTER
           value: ""
-        image: registry.replicated.com/ship-enterprise/ship-cluster-api:f49d070
+        image: registry.replicated.com/ship-enterprise/ship-cluster-api:bffa65c
         imagePullPolicy: IfNotPresent
         name: ship-cluster-local-cluster
       imagePullSecrets:
@@ -2648,7 +2648,7 @@ spec:
           serviceName: ship-cluster-api
           servicePort: 3000
         path: /graphql
-  - host: qa-testing
+  - host: testing
     http:
       paths:
       - backend:
@@ -2665,7 +2665,7 @@ spec:
         path: /graphql
   tls:
   - hosts:
-    - qa-testing
+    - testing
     secretName: ship-enterprise-tls
 ---
 apiVersion: schemas.schemahero.io/v1alpha2
@@ -2699,6 +2699,12 @@ spec:
           notNull: true
         name: installation_id
         type: integer
+      - default: "false"
+        name: is_deleted
+        type: boolean
+      - default: "false"
+        name: is_404
+        type: boolean
       primaryKey:
       - cluster_id
 ---
@@ -2828,6 +2834,9 @@ spec:
         type: integer
       - name: created_at
         type: timestamp without time zone
+      - default: "false"
+        name: is_deleted
+        type: boolean
       primaryKey:
       - id
 ---
@@ -3108,6 +3117,64 @@ spec:
       - name: watch_id
         type: text
       primaryKey: []
+---
+apiVersion: schemas.schemahero.io/v1alpha2
+kind: Table
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: preflight-result
+spec:
+  database: ship-cluster-postgres
+  name: preflight_result
+  requires: []
+  schema:
+    postgres:
+      columns:
+      - constraints:
+          notNull: true
+        name: id
+        type: text
+      - constraints:
+          notNull: true
+        name: watch_id
+        type: text
+      - constraints:
+          notNull: true
+        name: result
+        type: text
+      - constraints:
+          notNull: true
+        name: created_at
+        type: timestamp without time zone
+      primaryKey:
+      - id
+---
+apiVersion: schemas.schemahero.io/v1alpha2
+kind: Table
+metadata:
+  name: preflight-spec
+spec:
+  database: ship-cluster-postgres
+  name: preflight_spec
+  schema:
+    postgres:
+      columns:
+      - constraints:
+          notNull: true
+        name: watch_id
+        type: text
+      - constraints:
+          notNull: true
+        name: sequence
+        type: int
+      - constraints:
+          notNull: true
+        name: spec
+        type: text
+      primaryKey:
+      - watch_id
+      - sequence
 ---
 apiVersion: schemas.schemahero.io/v1alpha2
 kind: Table
