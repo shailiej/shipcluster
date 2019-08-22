@@ -4,7 +4,7 @@ metadata:
   name: collector-sample
 spec:
   - run:
-      collectorName: ping-google
+      collectorName: netstat
       namespace: default
       image: flungo/netutils
       command: ["netstat"]
