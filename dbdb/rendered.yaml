@@ -153,16 +153,10 @@ metadata:
   name: collector-sample
 spec:
   collectors:
-  - run:
-      args:
-      - -n
-      - -a
-      collectorName: netstat
-      command:
-      - netstat
-      image: flungo/netutils
-      namespace: default
-      timeout: 5s
+  - http:
+      collectorName: fortunecookie
+      get:
+        url: https://quotes.rest/qod
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
