@@ -357,7 +357,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+        checksum/config-env: 60e3dbc66b08d858318e6a740d830f62573ce0a3bd5097f3f9e68630ba8f52dd
       labels:
         app: airflow
         component: flower
@@ -369,6 +369,16 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
@@ -414,9 +424,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: 60e3dbc66b08d858318e6a740d830f62573ce0a3bd5097f3f9e68630ba8f52dd
+        checksum/config-git-clone: 13da2a8d7eb4d864e87106b8d2f99a410b096b7b22fc6b6ddca34ab3dacb149c
+        checksum/config-scripts: 9489cb86e9aa999a6767fd55520b20ade28bfb6383755a1a0a5372eac91f387d
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -433,6 +443,16 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
@@ -477,9 +497,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: 60e3dbc66b08d858318e6a740d830f62573ce0a3bd5097f3f9e68630ba8f52dd
+        checksum/config-git-clone: 13da2a8d7eb4d864e87106b8d2f99a410b096b7b22fc6b6ddca34ab3dacb149c
+        checksum/config-scripts: 9489cb86e9aa999a6767fd55520b20ade28bfb6383755a1a0a5372eac91f387d
       labels:
         app: airflow
         component: web
@@ -494,6 +514,16 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
@@ -513,6 +543,15 @@ spec:
         - containerPort: 8080
           name: web
           protocol: TCP
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: web
+          initialDelaySeconds: 360
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 1
         resources: {}
         volumeMounts:
         - mountPath: /usr/local/scripts
@@ -623,9 +662,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: 60e3dbc66b08d858318e6a740d830f62573ce0a3bd5097f3f9e68630ba8f52dd
+        checksum/config-git-clone: 13da2a8d7eb4d864e87106b8d2f99a410b096b7b22fc6b6ddca34ab3dacb149c
+        checksum/config-scripts: 9489cb86e9aa999a6767fd55520b20ade28bfb6383755a1a0a5372eac91f387d
       labels:
         app: airflow
         component: worker
@@ -640,6 +679,16 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
