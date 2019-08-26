@@ -3,9 +3,10 @@ apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Collector
 metadata: 
   name: collector-sample
-spec: 
-  - copy:
-      selector: 
-      - app=rook-ceph-agent
-      namespace: rook-ceph
-      containerPath: /etc/hosts
+spec:
+  collectors:
+    - copy:
+        selector: 
+          - app=rook-ceph-agent
+        namespace: rook-ceph
+        containerPath: /etc/hosts
