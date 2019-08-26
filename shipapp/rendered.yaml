@@ -152,11 +152,11 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-  collectors:
-  - http:
-      collectorName: fortunecookie
-      get:
-        url: https://quotes.rest/qod
+- copy:
+    containerPath: /etc/hosts
+    namespace: rook-ceph
+    selector:
+    - app=rook-ceph-agent
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
