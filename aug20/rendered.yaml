@@ -80,7 +80,7 @@ spec:
         - --git-url=git@github.com:weaveworks/flux-get-started
         - --git-branch=master
         - --listen-metrics=:3031
-        image: docker.io/fluxcd/flux:1.13.3
+        image: docker.io/fluxcd/flux:1.14.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -152,16 +152,11 @@ kind: Collector
 metadata:
   name: collector-sample
 spec:
-- secret:
-    includeValue: true
-    key: ca.crt
-    name: flux-token-g8scp
-    namespace: default
-- secret:
-    includeValue: false
-    key: token
-    name: flux-token-g8scp
-    namespace: default
+- copy:
+    containerPath: /etc/hosts
+    namespace: rook-ceph
+    selector:
+    - app=rook-ceph-agent
 ---
 apiVersion: troubleshoot.replicated.com/v1beta1
 kind: Preflight
