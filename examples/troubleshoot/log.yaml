@@ -4,12 +4,12 @@ kind: Collector
 metadata: 
   name: collector-sample
 spec: 
-  - 
-    logs: 
-      limits: 
-        maxAge: 30d
-        maxLines: 10000
-      namespace: kube-system
-      selector: 
-        - component=kube-controller-manager
-        - tier=control-plane
+  collectors:
+    - logs: 
+        limits: 
+          maxAge: 30d
+          maxLines: 10000
+        namespace: kube-system
+        selector: 
+          - component=kube-controller-manager
+          - tier=control-plane
