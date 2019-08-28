@@ -357,7 +357,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: adff7acc09a0ccb5b1ac7f1dd743b9543406615bc7ea5bb91ddc8c59447680ed
+        checksum/config-env: 096b4a852e7c453ad7972fe93ac371b36eab14487e84dbee3a2f241a2724bc09
       labels:
         app: airflow
         component: flower
@@ -382,7 +382,7 @@ spec:
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -424,9 +424,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: adff7acc09a0ccb5b1ac7f1dd743b9543406615bc7ea5bb91ddc8c59447680ed
-        checksum/config-git-clone: a54aea3bf812db2e4b6e1f51eea9a1de0f6d328424046e4ee25980496de1a625
-        checksum/config-scripts: 98638cc6d235801e6e92f6ab03f77a35f69f42ba51f23069d59d663832d5336b
+        checksum/config-env: 096b4a852e7c453ad7972fe93ac371b36eab14487e84dbee3a2f241a2724bc09
+        checksum/config-git-clone: d6ede9f4d9c03c23c63ce87c64d7ef7dce461f29ea833ed09ffe4709bbec5859
+        checksum/config-scripts: 5edcda1c8ba77f909e4277ce4967553246831b94d2fd6dbc059dfd24a39bee22
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -456,7 +456,7 @@ spec:
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         name: airflow-scheduler
         resources: {}
@@ -497,9 +497,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: adff7acc09a0ccb5b1ac7f1dd743b9543406615bc7ea5bb91ddc8c59447680ed
-        checksum/config-git-clone: a54aea3bf812db2e4b6e1f51eea9a1de0f6d328424046e4ee25980496de1a625
-        checksum/config-scripts: 98638cc6d235801e6e92f6ab03f77a35f69f42ba51f23069d59d663832d5336b
+        checksum/config-env: 096b4a852e7c453ad7972fe93ac371b36eab14487e84dbee3a2f241a2724bc09
+        checksum/config-git-clone: d6ede9f4d9c03c23c63ce87c64d7ef7dce461f29ea833ed09ffe4709bbec5859
+        checksum/config-scripts: 5edcda1c8ba77f909e4277ce4967553246831b94d2fd6dbc059dfd24a39bee22
       labels:
         app: airflow
         component: web
@@ -527,7 +527,7 @@ spec:
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -662,9 +662,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: adff7acc09a0ccb5b1ac7f1dd743b9543406615bc7ea5bb91ddc8c59447680ed
-        checksum/config-git-clone: a54aea3bf812db2e4b6e1f51eea9a1de0f6d328424046e4ee25980496de1a625
-        checksum/config-scripts: 98638cc6d235801e6e92f6ab03f77a35f69f42ba51f23069d59d663832d5336b
+        checksum/config-env: 096b4a852e7c453ad7972fe93ac371b36eab14487e84dbee3a2f241a2724bc09
+        checksum/config-git-clone: d6ede9f4d9c03c23c63ce87c64d7ef7dce461f29ea833ed09ffe4709bbec5859
+        checksum/config-scripts: 5edcda1c8ba77f909e4277ce4967553246831b94d2fd6dbc059dfd24a39bee22
       labels:
         app: airflow
         component: worker
@@ -692,7 +692,7 @@ spec:
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         name: airflow-worker
         ports:
