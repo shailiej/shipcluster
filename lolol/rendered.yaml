@@ -357,7 +357,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
+        checksum/config-env: bf9e07addc3b3cb095b01f929008623b08515037eaaeed9e5f8a6b1ab52d490f
       labels:
         app: airflow
         component: flower
@@ -369,10 +369,20 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -414,9 +424,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: bf9e07addc3b3cb095b01f929008623b08515037eaaeed9e5f8a6b1ab52d490f
+        checksum/config-git-clone: 807e9aba2c471d41eaa2cd582ada9fbc045d9c440f48dd5ea5812e79ccc7db09
+        checksum/config-scripts: 799df235a9760e5c4258ee9ce655677aa04113d830a62d3de3743ff00570c22e
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -433,10 +443,20 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         name: airflow-scheduler
         resources: {}
@@ -477,9 +497,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: bf9e07addc3b3cb095b01f929008623b08515037eaaeed9e5f8a6b1ab52d490f
+        checksum/config-git-clone: 807e9aba2c471d41eaa2cd582ada9fbc045d9c440f48dd5ea5812e79ccc7db09
+        checksum/config-scripts: 799df235a9760e5c4258ee9ce655677aa04113d830a62d3de3743ff00570c22e
       labels:
         app: airflow
         component: web
@@ -494,10 +514,20 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -513,6 +543,15 @@ spec:
         - containerPort: 8080
           name: web
           protocol: TCP
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: web
+          initialDelaySeconds: 360
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 1
         resources: {}
         volumeMounts:
         - mountPath: /usr/local/scripts
@@ -623,9 +662,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 5f2b1b16de170e6f613b747903d58bbada47be8699595d5f576fa2d7abb1707b
-        checksum/config-git-clone: 2865919d7fdcbe847cdf394e9d126d597821dfc610ef29fa5d7857fba75e018e
-        checksum/config-scripts: fd6016aa45ae34eec9bee692a3a254a30dc1d5d9aa352d5e7064d8a168256a1b
+        checksum/config-env: bf9e07addc3b3cb095b01f929008623b08515037eaaeed9e5f8a6b1ab52d490f
+        checksum/config-git-clone: 807e9aba2c471d41eaa2cd582ada9fbc045d9c440f48dd5ea5812e79ccc7db09
+        checksum/config-scripts: 799df235a9760e5c4258ee9ce655677aa04113d830a62d3de3743ff00570c22e
       labels:
         app: airflow
         component: worker
@@ -640,10 +679,20 @@ spec:
         env:
         - name: POSTGRES_USER
           value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: airflow-postgresql
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: airflow-redis
         envFrom:
         - configMapRef:
             name: airflow-env
-        image: puckel/docker-airflow:1.10.3
+        image: puckel/docker-airflow:1.10.4
         imagePullPolicy: IfNotPresent
         name: airflow-worker
         ports:
