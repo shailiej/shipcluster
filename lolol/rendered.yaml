@@ -60,11 +60,11 @@ data:
   AIRFLOW__CELERY__CELERY_CONCURRENCY: "1"
   AIRFLOW__CELERY__FLOWER_URL_PREFIX: ""
   AIRFLOW__CELERY__WORKER_CONCURRENCY: "1"
-  AIRFLOW__CODE__ENABLE_XCOM_PICKLING: "false"
   AIRFLOW__CORE__BASE_LOG_FOLDER: /usr/local/airflow/logs
   AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
   AIRFLOW__CORE__DAGS_FOLDER: /usr/local/airflow/dags
   AIRFLOW__CORE__DONOT_PICKLE: "false"
+  AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "false"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: /usr/local/airflow/logs/scheduler
   AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
   DO_WAIT_INITDB: "false"
@@ -357,7 +357,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 7e3a3dd1a8247f87f621090ea50f2acff697769eb1cec7d076a58545e4a953c5
+        checksum/config-env: 675bffaf7781039bd671f926fa00aec2e9e03a61ca7294cefefd09e8d2d0a3f1
       labels:
         app: airflow
         component: flower
@@ -424,9 +424,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 7e3a3dd1a8247f87f621090ea50f2acff697769eb1cec7d076a58545e4a953c5
-        checksum/config-git-clone: d3ba52d739c281b3e88481ff6a6659bdddf5c6eb369f2ba1a134f00855fd26bd
-        checksum/config-scripts: bfda7839522f3dfac4eb1dc91132ef555a258937ccd055b141f83ed271229048
+        checksum/config-env: 675bffaf7781039bd671f926fa00aec2e9e03a61ca7294cefefd09e8d2d0a3f1
+        checksum/config-git-clone: 129145af820bcd911fa72f4be4a0e32783f513a6e81832410ecb333bbce001ca
+        checksum/config-scripts: 97081693978f920e9c6ba36a885d4a7a2d01a4c35617c61f42bb96b67c2d37cc
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -497,9 +497,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 7e3a3dd1a8247f87f621090ea50f2acff697769eb1cec7d076a58545e4a953c5
-        checksum/config-git-clone: d3ba52d739c281b3e88481ff6a6659bdddf5c6eb369f2ba1a134f00855fd26bd
-        checksum/config-scripts: bfda7839522f3dfac4eb1dc91132ef555a258937ccd055b141f83ed271229048
+        checksum/config-env: 675bffaf7781039bd671f926fa00aec2e9e03a61ca7294cefefd09e8d2d0a3f1
+        checksum/config-git-clone: 129145af820bcd911fa72f4be4a0e32783f513a6e81832410ecb333bbce001ca
+        checksum/config-scripts: 97081693978f920e9c6ba36a885d4a7a2d01a4c35617c61f42bb96b67c2d37cc
       labels:
         app: airflow
         component: web
@@ -662,9 +662,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 7e3a3dd1a8247f87f621090ea50f2acff697769eb1cec7d076a58545e4a953c5
-        checksum/config-git-clone: d3ba52d739c281b3e88481ff6a6659bdddf5c6eb369f2ba1a134f00855fd26bd
-        checksum/config-scripts: bfda7839522f3dfac4eb1dc91132ef555a258937ccd055b141f83ed271229048
+        checksum/config-env: 675bffaf7781039bd671f926fa00aec2e9e03a61ca7294cefefd09e8d2d0a3f1
+        checksum/config-git-clone: 129145af820bcd911fa72f4be4a0e32783f513a6e81832410ecb333bbce001ca
+        checksum/config-scripts: 97081693978f920e9c6ba36a885d4a7a2d01a4c35617c61f42bb96b67c2d37cc
       labels:
         app: airflow
         component: worker
