@@ -1,9 +1,15 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
     name: flux
   name: flux
+  namespace: flux
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -36,18 +42,20 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: flux
-  namespace: default
+  namespace: flux
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: flux-git-deploy
+  namespace: flux
 type: Opaque
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: memcached
+  namespace: flux
 spec:
   ports:
   - name: memcached
@@ -59,6 +67,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flux
+  namespace: flux
 spec:
   replicas: 1
   selector:
@@ -77,10 +86,10 @@ spec:
       - args:
         - --memcached-service=
         - --ssh-keygen-dir=/var/fluxd/keygen
-        - --git-url=git@github.com:weaveworks/flux-get-started
+        - --git-url=git@github.com:fluxcd/flux-get-started
         - --git-branch=master
         - --listen-metrics=:3031
-        image: docker.io/fluxcd/flux:1.14.1
+        image: docker.io/fluxcd/flux:1.15.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -121,6 +130,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: memcached
+  namespace: flux
 spec:
   replicas: 1
   selector:
