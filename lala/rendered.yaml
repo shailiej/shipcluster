@@ -44,8 +44,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: RGRhejUwdEFmNw==
-  mariadb-root-password: dG9uYjZ6Q2ROZA==
+  mariadb-password: NnlrT09rbHl0bg==
+  mariadb-root-password: MDQ2R0hGVlR6OA==
 kind: Secret
 metadata:
   labels:
@@ -56,7 +56,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: NFlnb0hDMmJsdw==
+  ghost-password: WlF3RDJXWEd0Qw==
 kind: Secret
 metadata:
   labels:
@@ -123,7 +123,7 @@ spec:
     metadata:
       labels:
         app: mariadb
-        chart: mariadb-6.11.3
+        chart: mariadb-6.12.0
         component: master
         release: ghost
     spec:
@@ -181,7 +181,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-        resources: {}
         volumeMounts:
         - mountPath: /bitnami/mariadb
           name: data
@@ -233,7 +232,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-6dlko
+  name: ghost-mariadb-test-7e85x
 spec:
   containers:
   - command:
