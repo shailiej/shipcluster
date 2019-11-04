@@ -15,6 +15,7 @@ data:
     skip-name-resolve
     explicit_defaults_for_timestamp
     basedir=/opt/bitnami/mariadb
+    plugin_dir=/opt/bitnami/mariadb/plugin
     port=3306
     socket=/opt/bitnami/mariadb/tmp/mysql.sock
     tmpdir=/opt/bitnami/mariadb/tmp
@@ -29,6 +30,7 @@ data:
     port=3306
     socket=/opt/bitnami/mariadb/tmp/mysql.sock
     default-character-set=UTF8
+    plugin_dir=/opt/bitnami/mariadb/plugin
 
     [manager]
     port=3306
@@ -44,8 +46,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: Q3FBNW9zOElvbw==
-  mariadb-root-password: Nkp1OHdPRFZwNw==
+  mariadb-password: SklLa2U4NEc1cw==
+  mariadb-root-password: RmxROWp2VHJ3TA==
 kind: Secret
 metadata:
   labels:
@@ -56,7 +58,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: VUVSa0d0aDhzcg==
+  ghost-password: UkVBNVpkVTlFcQ==
 kind: Secret
 metadata:
   labels:
@@ -123,7 +125,7 @@ spec:
     metadata:
       labels:
         app: mariadb
-        chart: mariadb-6.12.2
+        chart: mariadb-6.13.0
         component: master
         release: ghost
     spec:
@@ -232,7 +234,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-6htbm
+  name: ghost-mariadb-test-6lvwv
 spec:
   containers:
   - command:
