@@ -191,6 +191,16 @@ data:
     else
       exit 0
     fi
+  stop-worker.sh: |
+    #!/bin/sh -e
+    celery -b $AIRFLOW__CELERY__BROKER_URL -d celery@$HOSTNAME control cancel_consumer default
+
+    # wait 10 second before checking the status of the worker
+    sleep 10
+
+    while (( $(celery -b $AIRFLOW__CELERY__BROKER_URL inspect active --json | python -c "import sys, json; print(len(json.load(sys.stdin)['celery@$HOSTNAME']))") > 0 )); do
+    sleep 60
+    done
 kind: ConfigMap
 metadata:
   labels:
@@ -357,7 +367,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 9ba135830e4b1e5cedd87b03e84294442e078bd526c30df169e77ca86d0f21e1
+        checksum/config-env: 05936bb1c382fdd191f1e4996d325051d78fb2e855023b20786c7b1e2061a0ca
       labels:
         app: airflow
         component: flower
@@ -424,9 +434,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 9ba135830e4b1e5cedd87b03e84294442e078bd526c30df169e77ca86d0f21e1
-        checksum/config-git-clone: 51ac1ddaf985bc375a26b50bf2661ce42580c55d9b46a53509b011b7d93eeec1
-        checksum/config-scripts: 9930bbf6f7cb0bc4ab0526b1a257ecb691c580e856a3db09aab54a922185178f
+        checksum/config-env: 05936bb1c382fdd191f1e4996d325051d78fb2e855023b20786c7b1e2061a0ca
+        checksum/config-git-clone: 858573b0c240d4fb5a0a3883c255be50fd8444322d262053a5e0a2490e7f2c8d
+        checksum/config-scripts: 0c10936a7a379d7f6e8a94b2a69222a08b029c6bb6c5928a163654662fee7be2
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -497,9 +507,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 9ba135830e4b1e5cedd87b03e84294442e078bd526c30df169e77ca86d0f21e1
-        checksum/config-git-clone: 51ac1ddaf985bc375a26b50bf2661ce42580c55d9b46a53509b011b7d93eeec1
-        checksum/config-scripts: 9930bbf6f7cb0bc4ab0526b1a257ecb691c580e856a3db09aab54a922185178f
+        checksum/config-env: 05936bb1c382fdd191f1e4996d325051d78fb2e855023b20786c7b1e2061a0ca
+        checksum/config-git-clone: 858573b0c240d4fb5a0a3883c255be50fd8444322d262053a5e0a2490e7f2c8d
+        checksum/config-scripts: 0c10936a7a379d7f6e8a94b2a69222a08b029c6bb6c5928a163654662fee7be2
       labels:
         app: airflow
         component: web
@@ -662,9 +672,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 9ba135830e4b1e5cedd87b03e84294442e078bd526c30df169e77ca86d0f21e1
-        checksum/config-git-clone: 51ac1ddaf985bc375a26b50bf2661ce42580c55d9b46a53509b011b7d93eeec1
-        checksum/config-scripts: 9930bbf6f7cb0bc4ab0526b1a257ecb691c580e856a3db09aab54a922185178f
+        checksum/config-env: 05936bb1c382fdd191f1e4996d325051d78fb2e855023b20786c7b1e2061a0ca
+        checksum/config-git-clone: 858573b0c240d4fb5a0a3883c255be50fd8444322d262053a5e0a2490e7f2c8d
+        checksum/config-scripts: 0c10936a7a379d7f6e8a94b2a69222a08b029c6bb6c5928a163654662fee7be2
       labels:
         app: airflow
         component: worker
