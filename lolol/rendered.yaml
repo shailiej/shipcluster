@@ -66,7 +66,7 @@ data:
   AIRFLOW__CORE__DONOT_PICKLE: "false"
   AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "false"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: /usr/local/airflow/logs/scheduler
-  AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+  AIRFLOW__WEBSERVER__BASE_URL: ""
   DO_WAIT_INITDB: "false"
   EXECUTOR: Celery
   FERNET_KEY: ""
@@ -367,7 +367,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 443affcda616062f51fca22f2f7a926e20dd4b59c6c81ebe40041173672a5f31
+        checksum/config-env: d92500721bf0da0dee84a10f8aa3ce307d9feeee1b91a4c5cf8edbb24a4aea09
       labels:
         app: airflow
         component: flower
@@ -434,9 +434,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 443affcda616062f51fca22f2f7a926e20dd4b59c6c81ebe40041173672a5f31
-        checksum/config-git-clone: 6642f6fbb87eb855cf322cb238fcc0fb723b54bc76770cf768b9d19425fc9863
-        checksum/config-scripts: 6481dfe442fdb8fc3eaa4d5db042ab80a7e80232eb728005c53eccb353465a6c
+        checksum/config-env: d92500721bf0da0dee84a10f8aa3ce307d9feeee1b91a4c5cf8edbb24a4aea09
+        checksum/config-git-clone: 26498d1518febc17a8c93e7ace87c0b814c0f48747cfa51478157ebdbf39d719
+        checksum/config-scripts: c67ff0656c740ea2ab066e64547da4e1ba353b9071a3d37529ee590292471506
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -507,9 +507,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 443affcda616062f51fca22f2f7a926e20dd4b59c6c81ebe40041173672a5f31
-        checksum/config-git-clone: 6642f6fbb87eb855cf322cb238fcc0fb723b54bc76770cf768b9d19425fc9863
-        checksum/config-scripts: 6481dfe442fdb8fc3eaa4d5db042ab80a7e80232eb728005c53eccb353465a6c
+        checksum/config-env: d92500721bf0da0dee84a10f8aa3ce307d9feeee1b91a4c5cf8edbb24a4aea09
+        checksum/config-git-clone: 26498d1518febc17a8c93e7ace87c0b814c0f48747cfa51478157ebdbf39d719
+        checksum/config-scripts: c67ff0656c740ea2ab066e64547da4e1ba353b9071a3d37529ee590292471506
       labels:
         app: airflow
         component: web
@@ -672,9 +672,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 443affcda616062f51fca22f2f7a926e20dd4b59c6c81ebe40041173672a5f31
-        checksum/config-git-clone: 6642f6fbb87eb855cf322cb238fcc0fb723b54bc76770cf768b9d19425fc9863
-        checksum/config-scripts: 6481dfe442fdb8fc3eaa4d5db042ab80a7e80232eb728005c53eccb353465a6c
+        checksum/config-env: d92500721bf0da0dee84a10f8aa3ce307d9feeee1b91a4c5cf8edbb24a4aea09
+        checksum/config-git-clone: 26498d1518febc17a8c93e7ace87c0b814c0f48747cfa51478157ebdbf39d719
+        checksum/config-scripts: c67ff0656c740ea2ab066e64547da4e1ba353b9071a3d37529ee590292471506
       labels:
         app: airflow
         component: worker
