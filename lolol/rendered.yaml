@@ -91,6 +91,8 @@ data:
     REPO=$1
     REF=$2
     DIR=$3
+    REPO_HOST=$4
+    PRIVATE_KEY=$5
     # Init Containers will re-run on Pod restart. Remove the directory's contents
     # and reprovision when this happens.
     if [ -d "$DIR" ]; then
@@ -369,7 +371,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: d093a94e7f97af1df4990f2066fe009e4dfc1c92f520029ac8bb3bccabb15fcc
+        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
       labels:
         app: airflow
         component: flower
@@ -436,9 +438,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: d093a94e7f97af1df4990f2066fe009e4dfc1c92f520029ac8bb3bccabb15fcc
-        checksum/config-git-clone: 628056ad98a80bcab8ec985e1815ddd6b66a37e64a2c47d6fcae0454b7a9f08f
-        checksum/config-scripts: dc1b3ae9984423d4b66d05b55d945ccf9490774e7e407adf011f8cf88e7b67bb
+        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
+        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
+        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -509,9 +511,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: d093a94e7f97af1df4990f2066fe009e4dfc1c92f520029ac8bb3bccabb15fcc
-        checksum/config-git-clone: 628056ad98a80bcab8ec985e1815ddd6b66a37e64a2c47d6fcae0454b7a9f08f
-        checksum/config-scripts: dc1b3ae9984423d4b66d05b55d945ccf9490774e7e407adf011f8cf88e7b67bb
+        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
+        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
+        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
       labels:
         app: airflow
         component: web
@@ -674,9 +676,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: d093a94e7f97af1df4990f2066fe009e4dfc1c92f520029ac8bb3bccabb15fcc
-        checksum/config-git-clone: 628056ad98a80bcab8ec985e1815ddd6b66a37e64a2c47d6fcae0454b7a9f08f
-        checksum/config-scripts: dc1b3ae9984423d4b66d05b55d945ccf9490774e7e407adf011f8cf88e7b67bb
+        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
+        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
+        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
       labels:
         app: airflow
         component: worker
