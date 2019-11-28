@@ -46,8 +46,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: VHF5cHU2TU5CVQ==
-  mariadb-root-password: UzF5TUo1aGNpTg==
+  mariadb-password: Q2pLSmJTMkZvVQ==
+  mariadb-root-password: NWJPNnRQc1Nlaw==
 kind: Secret
 metadata:
   labels:
@@ -58,7 +58,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: UjlKQWNBT2RJTg==
+  ghost-password: RElEUGg2WW1SZQ==
 kind: Secret
 metadata:
   labels:
@@ -125,7 +125,7 @@ spec:
     metadata:
       labels:
         app: mariadb
-        chart: mariadb-7.0.1
+        chart: mariadb-7.1.0
         component: master
         release: ghost
     spec:
@@ -234,7 +234,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-whpy4
+  name: ghost-mariadb-test-zler6
 spec:
   containers:
   - command:
@@ -264,7 +264,7 @@ spec:
       set -ex
       # copy bats to tools dir
       cp -R /usr/local/libexec/ /tools/bats/
-    image: dduportal/bats:0.4.0
+    image: docker.io/dduportal/bats:0.4.0
     name: test-framework
     volumeMounts:
     - mountPath: /tools
