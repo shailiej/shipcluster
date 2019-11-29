@@ -101,6 +101,16 @@ data:
     git clone $REPO $DIR
     cd $DIR
     git reset --hard $REF
+  git-sync.sh: |
+    #!/bin/sh -e
+    REPO=$1
+    REF=$2
+    DIR=$3
+    REPO_HOST=$4
+    PRIVATE_KEY=$5
+    SYNC_TIME=$6
+    cd $DIR
+    while true; do git pull; date; sleep $SYNC_TIME; done
 kind: ConfigMap
 metadata:
   labels:
@@ -371,7 +381,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
+        checksum/config-env: 4ee020624b4c4e6c7e5b7a1e9161839eaeb06c462968cd4c3e1066cdef5eaeca
       labels:
         app: airflow
         component: flower
@@ -438,9 +448,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
-        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
-        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
+        checksum/config-env: 4ee020624b4c4e6c7e5b7a1e9161839eaeb06c462968cd4c3e1066cdef5eaeca
+        checksum/config-git-clone: f1ccca4494c87cfd3b6a582326f8b995ffb3c65bf4ed4341c188de9e98dd9ae5
+        checksum/config-scripts: c286309579b6482ec7922f5bf3d1c509aecd617e8ea9c9a305af610658a21dc0
         checksum/config-variables-pools: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         checksum/secret-connections: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
@@ -511,9 +521,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
-        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
-        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
+        checksum/config-env: 4ee020624b4c4e6c7e5b7a1e9161839eaeb06c462968cd4c3e1066cdef5eaeca
+        checksum/config-git-clone: f1ccca4494c87cfd3b6a582326f8b995ffb3c65bf4ed4341c188de9e98dd9ae5
+        checksum/config-scripts: c286309579b6482ec7922f5bf3d1c509aecd617e8ea9c9a305af610658a21dc0
       labels:
         app: airflow
         component: web
@@ -676,9 +686,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config-env: 0b488da0d13a6165e694b62915b71f066d4ef2eb9d4806c37fa450f53b43cae0
-        checksum/config-git-clone: 1865edc76cfcf641e79d950d5c99e5e4a733a30235ab5dcea6299e92ac904c00
-        checksum/config-scripts: 9be38c06a339664c58a7b21e20343d263a30776348fa40a736ead958434657be
+        checksum/config-env: 4ee020624b4c4e6c7e5b7a1e9161839eaeb06c462968cd4c3e1066cdef5eaeca
+        checksum/config-git-clone: f1ccca4494c87cfd3b6a582326f8b995ffb3c65bf4ed4341c188de9e98dd9ae5
+        checksum/config-scripts: c286309579b6482ec7922f5bf3d1c509aecd617e8ea9c9a305af610658a21dc0
       labels:
         app: airflow
         component: worker
