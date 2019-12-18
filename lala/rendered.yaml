@@ -46,8 +46,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: UnJEOXdXZFc5cA==
-  mariadb-root-password: eDZtMVdqUFp2aQ==
+  mariadb-password: RXhHazF4emJ4TA==
+  mariadb-root-password: a3lLUHI3eU5zNg==
 kind: Secret
 metadata:
   labels:
@@ -58,7 +58,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: MzlvSGVnbnB0Yw==
+  ghost-password: bW4zakhzRkcwbw==
 kind: Secret
 metadata:
   labels:
@@ -125,7 +125,7 @@ spec:
     metadata:
       labels:
         app: mariadb
-        chart: mariadb-7.2.1
+        chart: mariadb-7.3.1
         component: master
         release: ghost
     spec:
@@ -155,14 +155,19 @@ spec:
               name: ghost-mariadb
         - name: MARIADB_DATABASE
           value: bitnami_ghost
-        image: docker.io/bitnami/mariadb:10.3.20-debian-9-r17
+        image: docker.io/bitnami/mariadb:10.3.21-debian-9-r0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
             command:
             - sh
             - -c
-            - exec mysqladmin status -uroot -p$MARIADB_ROOT_PASSWORD
+            - |
+              password_aux="${MARIADB_ROOT_PASSWORD:-}"
+              if [ -f "${MARIADB_ROOT_PASSWORD_FILE:-}" ]; then
+                  password_aux=$(cat $MARIADB_ROOT_PASSWORD_FILE)
+              fi
+              mysqladmin status -uroot -p$password_aux
           failureThreshold: 3
           initialDelaySeconds: 120
           periodSeconds: 10
@@ -177,7 +182,12 @@ spec:
             command:
             - sh
             - -c
-            - exec mysqladmin status -uroot -p$MARIADB_ROOT_PASSWORD
+            - |
+              password_aux="${MARIADB_ROOT_PASSWORD:-}"
+              if [ -f "${MARIADB_ROOT_PASSWORD_FILE:-}" ]; then
+                  password_aux=$(cat $MARIADB_ROOT_PASSWORD_FILE)
+              fi
+              mysqladmin status -uroot -p$password_aux
           failureThreshold: 3
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -234,7 +244,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-3rllo
+  name: ghost-mariadb-test-6vmqu
 spec:
   containers:
   - command:
@@ -247,7 +257,7 @@ spec:
         secretKeyRef:
           key: mariadb-root-password
           name: ghost-mariadb
-    image: docker.io/bitnami/mariadb:10.3.20-debian-9-r17
+    image: docker.io/bitnami/mariadb:10.3.21-debian-9-r0
     imagePullPolicy: IfNotPresent
     name: mariadb-test
     volumeMounts:
