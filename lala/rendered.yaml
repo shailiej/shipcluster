@@ -46,8 +46,8 @@ metadata:
 ---
 apiVersion: v1
 data:
-  mariadb-password: aE1LclpYOGpZeA==
-  mariadb-root-password: VVFsRHU2TU9sdQ==
+  mariadb-password: eEJQMllJSmRBWQ==
+  mariadb-root-password: NHE3VkFSMHJwTA==
 kind: Secret
 metadata:
   labels:
@@ -58,7 +58,7 @@ type: transparentghost
 ---
 apiVersion: v1
 data:
-  ghost-password: ZEQwS0Zqa2o0aQ==
+  ghost-password: TGFEcjNtQWpSYw==
 kind: Secret
 metadata:
   labels:
@@ -125,7 +125,7 @@ spec:
     metadata:
       labels:
         app: mariadb
-        chart: mariadb-7.3.3
+        chart: mariadb-7.3.6
         component: master
         release: ghost
     spec:
@@ -155,7 +155,7 @@ spec:
               name: ghost-mariadb
         - name: MARIADB_DATABASE
           value: bitnami_ghost
-        image: docker.io/bitnami/mariadb:10.3.21-debian-9-r22
+        image: docker.io/bitnami/mariadb:10.3.21-debian-10-r0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -244,7 +244,7 @@ kind: Pod
 metadata:
   annotations:
     helm.sh/hook: test-success
-  name: ghost-mariadb-test-mc8kr
+  name: ghost-mariadb-test-c5ty5
 spec:
   containers:
   - command:
@@ -257,7 +257,7 @@ spec:
         secretKeyRef:
           key: mariadb-root-password
           name: ghost-mariadb
-    image: docker.io/bitnami/mariadb:10.3.21-debian-9-r22
+    image: docker.io/bitnami/mariadb:10.3.21-debian-10-r0
     imagePullPolicy: IfNotPresent
     name: mariadb-test
     volumeMounts:
